@@ -7,10 +7,12 @@ name = "pypi"
 fastapi = "*"
 uvicorn = "*"
 requests = "*"
+pytest-watch = "*"
 
 [dev-packages]
 pytest = "*"
 yapf = "*"
+rope = "*"
 
 [requires]
 python_version = "3.8"
