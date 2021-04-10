@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from fastapi import status
 from gerenciador_tarefas.gerenciador import app, TAREFAS
+from uuid import UUID
 
 
 @pytest.fixture(scope='module')
@@ -21,7 +22,6 @@ def test_quando_listar_tarefas_formato_de_retorno_dev_ser_uma_lista(client):
 
 def test_quando_listar_tarefas_retorno_deve_ser_uma_json(client):
     resposta = client.get('/tarefas')
-    print(resposta)
     assert resposta.headers["Content-Type"] == "application/json"
 
 
@@ -118,11 +118,10 @@ def test_descrição_da_tarefa_pode_conter_no_maximo_140_caracteres(client):
 
 
 def test_quando_criar_uma_tarefa_a_mesma_deve_ser_retornada(client):
-    tarefa = {'titulo': 'titulo', 'descricao': 'descricao'}
+    tarefa = {'titulo': 'titulo', 'descricao': 'descricao', 'estado':'não finalizado'}
     resposta = client.post('/tarefas', json=tarefa)
     resposta_sem_id = resposta.json()
     del resposta_sem_id['id']
-    del resposta_sem_id['estado']
     assert tarefa == resposta_sem_id
     TAREFAS.clear()
 
@@ -233,7 +232,7 @@ def test_finalizar_uma_tarefa_deve_modificar_a_lista_de_tarefas(client):
 
 def test_detalhar_uma_tarefa_deve_retornar_codigo_200_se_existir_uma_tarefa_valida(client):
     id = '44bc2282-8735-4514-afb7-3f303b90d6bf'
-    tarefa = {'id': id, 'titulo': 'titulo', 'descricao': 'descricao'}
+    tarefa = {'id': UUID(id), 'titulo': 'titulo', 'descricao': 'descricao'}
     TAREFAS.append(tarefa)
     resposta = client.get(f'/tarefas/{id}')
     assert resposta.status_code == status.HTTP_200_OK
@@ -250,8 +249,10 @@ def test_detalhar_uma_tarefa_deve_retornar_codigo_404_se_NAO_existir_uma_tarefa_
 
 def test_detalhar_uma_tarefa_deve_retornar_uma_tarefa(client):
     id = '44bc2282-8735-4514-afb7-3f303b90d6bf'
-    tarefa = {'id': id, 'titulo': 'titulo', 'descricao': 'descricao'}
-    TAREFAS.append(tarefa)
+    tarefa_base = {'titulo': 'titulo', 'descricao': 'descricao', 'estado' : 'não finalizado'}
+    tarefa_persistida = {'id': UUID(id), **tarefa_base}
+    tarefa_esperada = {'id': id, **tarefa_base}
+    TAREFAS.append(tarefa_persistida)
     resposta = client.get(f'/tarefas/{id}')
-    assert resposta.json() == tarefa
+    assert resposta.json() == tarefa_esperada
     TAREFAS.clear()
